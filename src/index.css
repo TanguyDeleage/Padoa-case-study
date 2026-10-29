@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+/* padoa design tokens, taken from the original AMT dialog artifact */
+@theme {
+  --font-sans: "Open Sans", system-ui, -apple-system, sans-serif;
+
+  --color-raven-05: #dbedff;
+  --color-raven-100: #0046da;
+  --color-raven-120: #0036bb;
+  --color-stark-05: #f3f5f9;
+  --color-stark-20: #e2e6f0;
+  --color-stark-40: #c9cfe0;
+  --color-stark-100: #5f6c96;
+  --color-stark-120: #3c4a73;
+  --color-stark-180: #001235;
+  --color-allen-05: #ffe5e3;
+  --color-allen-100: #e22752;
+  --color-allen-120: #c21c52;
+  --color-grimm-05: #fee7cc;
+  --color-grimm-100: #e9792c;
+  --color-banner-05: #cbf4dd;
+  --color-banner-100: #08875f;
+  --color-bishop-05: #f9e3ff;
+  --color-bishop-100: #a43fc4;
+  --color-turquoise-05: #d4f3f5;
+  --color-purple-05: #ece7fb;
+  --color-green-05: #e1f5d8;
+  --color-wayne-05: #edeaea;
+  --color-griffin: #ffffff;
+  --color-griffin-2: #f5f7fb;
+  --color-page: #66718a;
+  --color-d-inter: #5b74e8;
+  --color-d-redac: #a43fc4;
+  --color-d-trajet: #f2a9c8;
+  --color-nav: #001a4d;
+  --color-canvas: #d9ebfc;
+
+  --shadow-md: 0 8px 24px rgba(0, 18, 53, 0.16);
+  --shadow-halo: 0 0 0 3px rgba(0, 70, 218, 0.25);
+}
+
+html,
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-stark-180);
+  background: var(--color-canvas);
+}
+
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-halo);
+  border-radius: 6px;
+}
+
+/* Shared control styles reused from the design */
+@layer components {
+  .btn {
+    @apply inline-flex h-8 items-center gap-1.5 rounded-md border border-stark-40 bg-white px-3.5 font-semibold text-stark-180 hover:bg-stark-05;
+  }
+  .btnp {
+    @apply inline-flex h-8 items-center gap-1.5 rounded-md border border-raven-100 bg-raven-100 px-3.5 font-semibold text-white hover:bg-raven-120;
+  }
+  .btnd {
+    @apply inline-flex h-8 items-center gap-1.5 rounded-md border border-allen-100 bg-allen-100 px-3.5 font-semibold text-white;
+  }
+  .btnt {
+    @apply inline-flex h-8 items-center gap-1 rounded-md px-2.5 font-semibold text-stark-120 hover:bg-stark-05 hover:text-stark-180;
+  }
+  .icon-btn {
+    @apply inline-flex h-7 w-7 flex-none items-center justify-center rounded-md text-stark-120 hover:bg-[rgba(0,18,53,.06)];
+  }
+  .menu {
+    @apply absolute z-30 flex min-w-[210px] flex-col rounded-md bg-white p-1 shadow-md;
+  }
+  .menuitem {
+    @apply flex w-full items-center gap-2 rounded px-2.5 py-2 text-left text-stark-180 hover:bg-raven-05;
+  }
+  .card {
+    @apply flex min-w-0 flex-col gap-3 rounded-lg border border-stark-20 px-[18px] py-4;
+  }
+  .card-title {
+    @apply m-0 flex items-center gap-2 text-base font-semibold;
+  }
+  .side-h {
+    @apply m-0 text-[11px] font-semibold tracking-[.06em] text-stark-120 uppercase;
+  }
+  .field {
+    @apply rounded-md border border-stark-40 bg-white px-2.5 focus:border-raven-100 focus:shadow-halo focus:outline-none;
+  }
+  .ghost {
+    @apply -mx-2 -my-1 w-[calc(100%+16px)] min-w-0 rounded-md border border-transparent bg-transparent px-2 py-1 placeholder:font-semibold placeholder:text-raven-100 hover:border-stark-40 hover:bg-white focus:border-raven-100 focus:bg-white focus:shadow-halo focus:outline-none;
+  }
+  .cell {
+    @apply w-[76px] rounded-md border border-stark-40 bg-white px-1 py-[3px] tabular-nums focus:border-raven-100 focus:shadow-halo focus:outline-none disabled:cursor-not-allowed disabled:border-stark-20 disabled:bg-stark-05 disabled:text-stark-100;
+  }
+  .link {
+    @apply inline-flex items-center gap-1 border-0 bg-transparent p-0 font-semibold text-raven-100 hover:text-raven-120 hover:underline;
+  }
+  .seg {
+    @apply h-[26px] rounded px-2.5 text-xs font-semibold text-stark-120 aria-pressed:bg-raven-05 aria-pressed:text-raven-120 disabled:opacity-45;
+  }
+}
