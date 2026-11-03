@@ -1,6 +1,14 @@
 import type { AmtStatus } from "../data/amts";
 
+/** Simulated "now": 9 Oct 2026 at 20:00 */
 export const TODAY = "2026-10-09";
+export const NOW = "20:00";
+const LOADED = Date.now();
+/** Simulated clock: starts at NOW and runs with real time, as "20h05" */
+export const clock = () => {
+  const t = Math.min(23 * 60 + 59, mins(NOW)! + Math.floor((Date.now() - LOADED) / 6e4));
+  return `${String(Math.floor(t / 60)).padStart(2, "0")}h${String(t % 60).padStart(2, "0")}`;
+};
 
 const MOIS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
 export const fmt = (iso: string) => {
@@ -83,6 +91,8 @@ export interface AmtEvent {
   start: string;
   end: string;
   who: string; // the participant this occurrence belongs to
+  /** Whoever created the rendez-vous, same for every occurrence */
+  by: string;
   /** Same for every occurrence of the rendez-vous (it is the agenda's slot) */
   plan: Record<TimeCat, number>;
   /** Raw input strings, empty = not entered */
@@ -110,7 +120,7 @@ export const byRdv = (list: AmtEvent[]) => {
 
 /* ---------- Derived rules (SPECS §3, §4.3) ---------- */
 
-export const isPast = (e: AmtEvent) => e.date <= TODAY;
+export const isPast = (e: AmtEvent) => e.date < TODAY || (e.date === TODAY && (e.end || e.start) <= NOW);
 export const isDone = isPast;
 export const cats = (e: AmtEvent) => TCATS.filter((c) => e.kind !== "redac" || c.k === "redac");
 export const hasReal = (e: AmtEvent, k: TimeCat) => {
@@ -125,13 +135,24 @@ export const planTotal = (e: AmtEvent) => TCATS.reduce((a, c) => a + planOf(e, c
 export const curTotal = (e: AmtEvent) => TCATS.reduce((a, c) => a + durOf(e, c.k), 0);
 export const hasReport = (e: AmtEvent) => !!e.report.trim() || !!e.reportFile;
 
+export type RdvTimeKind = "prevu" | "reel" | "mixte";
+export const RDV_TIME: Record<RdvTimeKind, string> = { prevu: "Prévu", reel: "Réel", mixte: "Mixte" };
+/** Time of a whole rendez-vous, summed across its occurrences like the engaged time: real when entered, planned otherwise.
+ *  "Mixte" when only some participants have entered their real time */
+export const rdvTime = (g: AmtEvent[]) => {
+  const t = g.reduce((s, e) => s + curTotal(e), 0);
+  const n = g.filter(anyReal).length;
+  const kind: RdvTimeKind = n === 0 ? "prevu" : n === g.length ? "reel" : "mixte";
+  return { t, kind, n };
+};
+
 export function issues(e: AmtEvent, echeance: string) {
   const errs: Issue[] = [];
   const warns: Issue[] = [];
   if (!isPast(e) && echeance && e.date > echeance)
     errs.push({ t: "Planifié après l’échéance", d: `L’évènement est prévu le ${fmt(e.date)}, après l’échéance de l’AMT (${fmt(echeance)}).` });
   if (isDone(e) && !anyReal(e))
-    warns.push({ t: "À compléter", d: "L’évènement est passé : renseignez le temps réel (0 avec une note s’il n’a pas eu lieu)." });
+    warns.push({ t: "À compléter", d: "L’évènement est passé : renseignez le temps réel." });
   if (isDone(e) && e.kind === "redac" && !hasReport(e))
     warns.push({ t: "Compte rendu à écrire", d: "Le compte rendu est obligatoire pour une rédaction." });
   return { errs, warns };
@@ -145,7 +166,7 @@ export function displayStatus(e: AmtEvent, echeance: string): EvDisplayStatus {
 /* ---------- Seed data ---------- */
 
 const ev = (p: Partial<AmtEvent> & Pick<AmtEvent, "id" | "kind" | "title" | "date" | "start" | "end" | "plan">): AmtEvent => ({
-  who: "PETIT Julie", rdv: p.id, real: {}, report: "", reportFile: null, ...p,
+  who: "PETIT Julie", rdv: p.id, real: {}, report: "", reportFile: null, ...p, by: p.by ?? p.who ?? "PETIT Julie",
 });
 
 export const SEED_EVENTS: AmtEvent[] = [

@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AmtStatus, AmtSummary } from "../data/amts";
 import { perimItems, type Perim } from "./perimeter";
-import { PEOPLE, SEED_EVENTS, SEED_HIST, SEED_TASKS, TODAY, fmt, hL, type AmtEvent, type FileRef, type HistEntry } from "./model";
+import { PEOPLE, SEED_EVENTS, SEED_HIST, SEED_TASKS, TODAY, byRdv, clock, fmt, hL, type AmtEvent, type FileRef, type HistEntry } from "./model";
 
 export const ME = "PETIT Julie";
 
@@ -20,22 +20,53 @@ const fv = (v: unknown) => {
   return t.length > 90 ? t.slice(0, 90) + "…" : t;
 };
 
-export function useAmt(amt: AmtSummary) {
-  const [statut, setStatutRaw] = useState<AmtStatus>(amt.status);
-  const [echeance, setEcheanceRaw] = useState("2026-11-15");
-  const [alloue, setAlloueRaw] = useState(20);
-  const [tasks, setTasks] = useState(SEED_TASKS);
-  const [events, setEvents] = useState<AmtEvent[]>(SEED_EVENTS);
-  const [hist, setHist] = useState<HistEntry[]>(SEED_HIST);
-  const [docs, setDocs] = useState<FileRef[]>([{ name: "support_sensibilisation_RPS.pdf", by: "Dr MOREAU Claire", d: "2026-10-02", size: "1,4 Mo" }]);
-  const [perim, setPerimRaw] = useState<Perim>({ kind: "adh", ids: [amt.companyCode] });
-  const [info, setInfoState] = useState<Info>({
+/** Everything the user can change in an AMT: kept by the app so it survives closing the dialog and feeds the list card */
+export interface AmtState {
+  statut: AmtStatus; echeance: string; alloue: number; tasks: typeof SEED_TASKS; events: AmtEvent[];
+  hist: HistEntry[]; docs: FileRef[]; perim: Perim; info: Info;
+}
+
+export const seedState = (amt: AmtSummary): AmtState => ({
+  statut: amt.status, echeance: "2026-11-15", alloue: 20, tasks: SEED_TASKS, events: SEED_EVENTS, hist: SEED_HIST,
+  docs: [{ name: "support_sensibilisation_RPS.pdf", by: "Dr MOREAU Claire", d: "2026-10-02", size: "1,4 Mo" }],
+  perim: { kind: "adh", ids: [amt.companyCode] },
+  info: {
     type: "RPS", demandeur: "Dr MOREAU Claire", contact: "GIRARD Paul, gérant", contexte: "",
     description: "Demande de l’employeur suite à plusieurs arrêts de travail dans l’équipe de montage. Objectif : sensibiliser les encadrants et les salariés aux facteurs de risques psychosociaux et proposer des pistes d’actions.",
     conclusion: "", intervenants: ["PETIT Julie", "Dr MOREAU Claire", "FERRAND Hugo"],
     etiquettes: ["Thématique AMT / 3. Facteurs organisationnels, relationnels et éthiques / Risques psychosociaux", "Sous-thématique AMT / 3.3 Sensibilisation aux RPS"],
     maintien: false, rapport: false, eva: false,
-  });
+  },
+});
+
+/** The list card's view of an AMT's content (RG-C3: report files count as documents; one event per rendez-vous) */
+export const summarize = (amt: AmtSummary, s: AmtState): AmtSummary => ({
+  ...amt,
+  status: s.statut,
+  intervenants: s.info.intervenants.slice(0, 2),
+  extraIntervenants: Math.max(0, s.info.intervenants.length - 2),
+  hasEvent: s.events.length > 0,
+  counts: {
+    ...amt.counts,
+    files: s.docs.length + s.events.filter((e) => e.reportFile).length,
+    events: byRdv(s.events).length,
+  },
+});
+
+export function useAmt(amt: AmtSummary, init: AmtState, onChange: (id: number, s: AmtState) => void) {
+  const [statut, setStatutRaw] = useState(init.statut);
+  const [echeance, setEcheanceRaw] = useState(init.echeance);
+  const [alloue, setAlloueRaw] = useState(init.alloue);
+  const [tasks, setTasks] = useState(init.tasks);
+  const [events, setEvents] = useState(init.events);
+  const [hist, setHist] = useState(init.hist);
+  const [docs, setDocs] = useState(init.docs);
+  const [perim, setPerimRaw] = useState(init.perim);
+  const [info, setInfoState] = useState(init.info);
+  // onChange must be stable (it is a dependency)
+  useEffect(() => {
+    onChange(amt.id, { statut, echeance, alloue, tasks, events, hist, docs, perim, info });
+  }, [onChange, amt.id, statut, echeance, alloue, tasks, events, hist, docs, perim, info]);
   const [toast, setToast] = useState<Toast | null>(null);
   const timer = useRef<number | undefined>(undefined);
   const prev = useRef<Record<string, string>>({});
@@ -46,9 +77,7 @@ export function useAmt(amt: AmtSummary) {
     timer.current = window.setTimeout(() => setToast(null), 6000);
   };
   const log = (text: string, from: string | null = null, to: string | null = null) => {
-    const n = new Date();
-    const time = `${String(n.getHours()).padStart(2, "0")}h${String(n.getMinutes()).padStart(2, "0")}`;
-    setHist((h) => [{ d: TODAY, time, by: ME, text, from, to }, ...h]);
+    setHist((h) => [{ d: TODAY, time: clock(), by: ME, text, from, to }, ...h]);
   };
   const undo = () => {
     toast?.undo?.();

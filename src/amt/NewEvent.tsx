@@ -117,7 +117,7 @@ export function NewEventDialog({ a, kind, editing, onClose }: { a: Amt; kind?: N
     // RG-E5: recompute the main category from the time slot, keep the planned redaction of an intervention
     const plan = { inter: inter ? slot : 0, redac: inter ? (e0?.plan.redac ?? 0) : slot, trajet: trajetH };
     const fresh = (who: string, i: number): AmtEvent => ({
-      id: `n${Date.now()}${i}`, rdv, kind: inter ? "inter" : "redac", who, plan: { ...plan },
+      id: `n${Date.now()}${i}`, rdv, kind: inter ? "inter" : "redac", who, by: e0?.by ?? ME, plan: { ...plan },
       real: {}, report: "", reportFile: null, ...fields,
     });
     const when = `${t} (${fmt(date)}, ${hm(start)} – ${hm(end)})`;

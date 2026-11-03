@@ -8,7 +8,7 @@ import { AddEventMenu, NewEventDialog, type NewEventKind } from "./NewEvent";
 import { Overview } from "./Overview";
 import { SidePanel } from "./SidePanel";
 import { Backdrop, Modal } from "./ui";
-import { useAmt } from "./useAmt";
+import { useAmt, type AmtState } from "./useAmt";
 
 type Dialog =
   | { kind: "delete" }
@@ -16,8 +16,8 @@ type Dialog =
   | { kind: "event"; editing: AmtEvent }
   | { kind: "newEvent"; ev: NewEventKind };
 
-export function AmtDialog({ amt, onClose }: { amt: AmtSummary; onClose: () => void }) {
-  const a = useAmt(amt);
+export function AmtDialog({ amt, init, onChange, onClose }: { amt: AmtSummary; init: AmtState; onChange: (id: number, s: AmtState) => void; onClose: () => void }) {
+  const a = useAmt(amt, init, onChange);
   const [menu, setMenu] = useState(false);
   // ?new=inter|autre or ?edit=<event id> opens the event form directly (handy for demos)
   const [dlg, setDlg] = useState<Dialog | null>(() => {

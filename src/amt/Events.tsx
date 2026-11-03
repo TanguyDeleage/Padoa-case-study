@@ -1,8 +1,8 @@
-import { CalendarDays, ChevronDown, Eye, FileText, MoreVertical, Pencil, Plus, Trash2, Upload, X } from "lucide-react";
+import { CalendarDays, ChevronDown, Eye, FileText, Info, MoreVertical, Pencil, Plus, Trash2, Upload, X } from "lucide-react";
 import { useState } from "react";
 import {
-  EST, KINDS, TODAY, byRdv, cats, curTotal, displayStatus, fmt, fsize, hD, hM, hasReal, hasReport, hm, isDone, isPast,
-  issues, planOf, planTotal, type AmtEvent, type EvDisplayStatus, type TimeCat,
+  EST, KINDS, NOW, RDV_TIME, TODAY, byRdv, cats, curTotal, displayStatus, fmt, fsize, hD, hM, hasReal, hasReport, hm, isDone, isPast,
+  issues, planOf, planTotal, rdvTime, type AmtEvent, type EvDisplayStatus, type TimeCat,
 } from "./model";
 import { AvatarStack, Backdrop, ErrIcon, Tooltip, WarnIcon } from "./ui";
 import { ME, type Amt } from "./useAmt";
@@ -10,8 +10,16 @@ import { ME, type Amt } from "./useAmt";
 const COLS = "grid grid-cols-[20px_140px_minmax(200px,1fr)_96px_96px_136px_64px] gap-x-3 items-center px-3";
 
 /** A rendez-vous as seen by the connected user: their own occurrence, or the most behind one when they don't take part */
-type Item = { kind: "event"; e: AmtEvent; mine: boolean; people: string[] } | { kind: "today" } | { kind: "due" };
+type Item = { kind: "event"; e: AmtEvent; g: AmtEvent[]; mine: boolean; people: string[] } | { kind: "today" } | { kind: "due" };
 const RANK: Record<EvDisplayStatus, number> = { prevu: 0, realise: 1, acompleter: 2 };
+
+const TIME_HELP = [
+  "Temps de l’évènement, cumulé pour tous les intervenants.",
+  "",
+  "Prévu : aucun intervenant n’a encore saisi son temps réel.",
+  "Réel : tous les intervenants ont saisi leur temps réel.",
+  "Mixte : temps réel de ceux qui l’ont saisi, temps prévu pour les autres.",
+].join("\n");
 
 export function EventsSection({ a, onAdd, onEdit }: { a: Amt; onAdd: (anchor: HTMLElement) => void; onEdit: (e: AmtEvent) => void }) {
   const [open, setOpen] = useState<Record<string, boolean>>({});
@@ -22,17 +30,18 @@ export function EventsSection({ a, onAdd, onEdit }: { a: Amt; onAdd: (anchor: HT
     const own = g.find((e) => e.who === ME);
     const e = own ?? g.reduce((w, x) => (RANK[displayStatus(x, a.echeance)] > RANK[displayStatus(w, a.echeance)] ? x : w));
     const people = g.map((x) => x.who).sort((x, y) => (x === ME ? -1 : y === ME ? 1 : 0));
-    return { kind: "event" as const, e, mine: !!own, people };
+    return { kind: "event" as const, e, g, mine: !!own, people };
   });
 
   // RG-E1: from furthest to oldest; RG-E2: markers at their chronological place
   const sorted = rows.sort(({ e: x }, { e: y }) => (x.date !== y.date ? (x.date > y.date ? -1 : 1) : x.start > y.start ? -1 : 1));
-  const markers: { d: string; item: Item }[] = [{ d: TODAY, item: { kind: "today" } }];
-  if (a.echeance) markers.push({ d: a.echeance, item: { kind: "due" } });
+  // Keys are "date time": today sits at NOW, the deadline above every event of its day
+  const markers: { d: string; item: Item }[] = [{ d: `${TODAY} ${NOW}`, item: { kind: "today" } }];
+  if (a.echeance) markers.push({ d: `${a.echeance} 24:00`, item: { kind: "due" } });
   markers.sort((x, y) => (x.d > y.d ? -1 : 1));
   const items: Item[] = [];
   sorted.forEach((row) => {
-    while (markers.length && markers[0].d >= row.e.date) items.push(markers.shift()!.item);
+    while (markers.length && markers[0].d >= `${row.e.date} ${row.e.start}`) items.push(markers.shift()!.item);
     items.push(row);
   });
   markers.forEach((m) => items.push(m.item));
@@ -51,7 +60,15 @@ export function EventsSection({ a, onAdd, onEdit }: { a: Amt; onAdd: (anchor: HT
             <span role="columnheader">Date</span>
             <span role="columnheader">Évènement</span>
             <span role="columnheader">Intervenants</span>
-            <span role="columnheader">Temps</span>
+            <span role="columnheader" className="flex items-center gap-1">
+              Temps
+              {/* Below the label: the header sits at the top of the scroll area, which would clip it above */}
+              <Tooltip below text={TIME_HELP}>
+                <span tabIndex={0} role="img" aria-label={TIME_HELP} className="inline-flex cursor-help rounded-full text-stark-120 hover:text-raven-100 focus-visible:outline-2 focus-visible:outline-raven-100">
+                  <Info size={14} aria-hidden="true" />
+                </span>
+              </Tooltip>
+            </span>
             <span role="columnheader">Statut</span>
             <span role="columnheader"><span className="sr-only">Actions</span></span>
           </div>
@@ -70,7 +87,7 @@ export function EventsSection({ a, onAdd, onEdit }: { a: Amt; onAdd: (anchor: HT
               );
             const e = it.e;
             return (
-              <EventRow key={e.rdv} a={a} e={e} mine={it.mine} people={it.people} open={!!open[e.rdv]} toggle={() => setOpen((o) => ({ ...o, [e.rdv]: !o[e.rdv] }))}
+              <EventRow key={e.rdv} a={a} e={e} g={it.g} mine={it.mine} people={it.people} open={!!open[e.rdv]} toggle={() => setOpen((o) => ({ ...o, [e.rdv]: !o[e.rdv] }))}
                 kebabOpen={kebab === e.rdv} setKebab={(v) => setKebab(v ? e.rdv : null)} onEdit={() => { setKebab(null); onEdit(e); }} />
             );
           })}
@@ -81,16 +98,21 @@ export function EventsSection({ a, onAdd, onEdit }: { a: Amt; onAdd: (anchor: HT
   );
 }
 
-function EventRow({ a, e, mine, people, open, toggle, kebabOpen, setKebab, onEdit }: {
-  a: Amt; e: AmtEvent; mine: boolean; people: string[]; open: boolean; toggle: () => void; kebabOpen: boolean; setKebab: (v: boolean) => void; onEdit: () => void;
+function EventRow({ a, e, g, mine, people, open, toggle, kebabOpen, setKebab, onEdit }: {
+  a: Amt; e: AmtEvent; g: AmtEvent[]; mine: boolean; people: string[]; open: boolean; toggle: () => void; kebabOpen: boolean; setKebab: (v: boolean) => void; onEdit: () => void;
 }) {
   const ds = displayStatus(e, a.echeance);
   const st = EST[ds];
-  const iss = issues(e, a.echeance);
+  const own = issues(e, a.echeance);
+  // The other participants' pending occurrences still flag the row, named after who has to act
+  const others = g.filter((x) => x !== e).flatMap((x) => issues(x, a.echeance).warns.map((m) => ({ ...m, t: `${m.t} (${x.who})` })));
+  const iss = { errs: own.errs, warns: [...own.warns, ...others] };
   const issueL = [...iss.errs, ...iss.warns].map((m) => m.t).join(" · ");
   const done = isDone(e);
-  const planT = planTotal(e);
-  const curT = curTotal(e);
+  // Only the creator of the rendez-vous or one of its participants may change it
+  const editable = mine || e.by === ME;
+  // Summed across participants, so the rows add up to the engaged time
+  const time = rdvTime(g);
 
   const del = () => {
     setKebab(false);
@@ -118,8 +140,9 @@ function EventRow({ a, e, mine, people, open, toggle, kebabOpen, setKebab, onEdi
         </span>
         <span role="cell" className="flex" aria-label={`Intervenants : ${people.join(", ")}`}><AvatarStack names={people} /></span>
         <span role="cell" className="text-xs font-semibold tabular-nums text-stark-120">
-          {/* Others' real time is theirs: a non-participant only sees the shared planned time */}
-          {mine && ds === "realise" ? `Réel ${hM(curT)}` : !mine || ds === "prevu" ? `Prévu ${hM(planT)}` : null}
+          <span title={time.kind === "mixte" ? `${time.n} intervenant${time.n > 1 ? "s" : ""} sur ${g.length} ont saisi leur temps réel : le temps prévu est compté pour les autres` : undefined}>
+            {RDV_TIME[time.kind]} {hM(time.t)}
+          </span>
         </span>
         <span role="cell" className="min-w-0">
           <span className="inline-flex h-7 max-w-full items-center gap-2 rounded-full px-2.5 text-xs font-bold" style={{ background: st.bg, color: st.fg }}>
@@ -129,7 +152,7 @@ function EventRow({ a, e, mine, people, open, toggle, kebabOpen, setKebab, onEdi
         </span>
         <span role="cell" className="flex items-center justify-end gap-1.5" onClick={(ev) => ev.stopPropagation()}>
           {mine && hasReport(e) && <FileText size={15} className="text-raven-100" aria-label="Compte rendu rédigé" />}
-          <span className="relative inline-flex">
+          {editable && <span className="relative inline-flex">
             <button type="button" className="icon-btn" aria-label={`Actions sur « ${e.title} »`} aria-haspopup="menu" aria-expanded={kebabOpen} onClick={() => setKebab(!kebabOpen)}>
               <MoreVertical size={16} />
             </button>
@@ -142,7 +165,7 @@ function EventRow({ a, e, mine, people, open, toggle, kebabOpen, setKebab, onEdi
                 </div>
               </>
             )}
-          </span>
+          </span>}
           <button type="button" className="icon-btn" aria-expanded={open} aria-label={`${open ? "Replier" : "Déplier"} ${e.title}`} onClick={toggle}>
             <ChevronDown size={16} className={`transition-transform ${open ? "rotate-180" : ""}`} />
           </button>
@@ -224,7 +247,13 @@ function TimeTable({ a, e, n, readOnly = false }: { a: Amt; e: AmtEvent; n: numb
             <div key={c.k} role="row" className={`${rowCls} min-h-[42px] border-b border-stark-20 py-1`}>
               <span role="cell" className="flex items-center gap-2"><i aria-hidden="true" className="h-[9px] w-[9px] flex-none rounded-sm" style={{ background: c.c }} />{c.l}</span>
               <span role="cell" className={readOnly ? "pl-[5px] tabular-nums" : ""}>
-                {readOnly ? hD(p) : <HoursInput key={`p${p}`} value={String(Math.round(p * 100) / 100)} aria={`${c.l} : temps prévu en heures`} onCommit={(v) => commitPlan(c.k, c.l, v)} />}
+                {readOnly ? hD(p) : future ? (
+                  <HoursInput key={`p${p}`} value={String(Math.round(p * 100) / 100)} aria={`${c.l} : temps prévu en heures`} onCommit={(v) => commitPlan(c.k, c.l, v)} />
+                ) : (
+                  <Tooltip text={"L’évènement a eu lieu :\nle temps prévu ne peut plus être modifié."}>
+                    <HoursInput value={String(Math.round(p * 100) / 100)} aria={`${c.l} : temps prévu en heures, non modifiable une fois l’évènement passé`} onCommit={() => {}} disabled />
+                  </Tooltip>
+                )}
               </span>
               {!readOnly && <span role="cell" className="flex min-w-0 items-center gap-1.5">
                 {future ? (

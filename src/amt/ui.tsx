@@ -21,12 +21,12 @@ export function WarnIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-/** Dark label shown above its child on hover or keyboard focus */
-export function Tooltip({ text, children, className = "" }: { text: string; children: ReactNode; className?: string }) {
+/** Dark label shown above its child (or below, near the top of a scroll area) on hover or keyboard focus */
+export function Tooltip({ text, children, className = "", below = false }: { text: string; children: ReactNode; className?: string; below?: boolean }) {
   return (
     <span className={`group/tip relative inline-flex ${className}`}>
       {children}
-      <span role="tooltip" className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1.5 hidden -translate-x-1/2 rounded bg-stark-180 px-2 py-1 text-xs font-semibold whitespace-pre text-white shadow-md group-focus-within/tip:block group-hover/tip:block">
+      <span role="tooltip" className={`pointer-events-none absolute left-1/2 z-30 hidden ${below ? "top-full mt-1.5" : "bottom-full mb-1.5"} -translate-x-1/2 rounded bg-stark-180 px-2 py-1 text-xs font-semibold whitespace-pre text-white shadow-md group-focus-within/tip:block group-hover/tip:block`}>
         {text}
       </span>
     </span>

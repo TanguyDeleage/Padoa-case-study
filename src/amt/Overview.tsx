@@ -160,6 +160,7 @@ function Temps({ a }: { a: Amt }) {
   const prevu = a.events.filter((e) => !isDone(e)).reduce((s, e) => s + planTotal(e), 0);
   const alloue = a.alloue;
   const over = total > alloue;
+  const engage = total + prevu;
   const dispo = Math.max(alloue - total - prevu, 0);
   const base = Math.max(total + prevu, alloue, 0.001);
   const C = 2 * Math.PI * 42;
@@ -188,36 +189,40 @@ function Temps({ a }: { a: Amt }) {
       <div className="flex flex-wrap items-center gap-5">
         <div className="relative h-[120px] w-[120px] flex-none">
           <svg viewBox="0 0 112 112" width="120" height="120" role="img"
-            aria-label={`Temps passé ${hL(total)} sur ${hL(alloue)} alloués : ${TCATS.map((c) => `${c.l} ${hL(cat[c.k])}`).join(", ")}, prévu ${hL(prevu)}, disponible ${hL(dispo)}`}>
+            aria-label={`Temps engagé ${hL(engage)} sur ${hL(alloue)} alloués : ${TCATS.map((c) => `${c.l} ${hL(cat[c.k])}`).join(", ")}, prévu ${hL(prevu)}, disponible ${hL(dispo)}`}>
             <circle cx="56" cy="56" r="42" fill="none" stroke="var(--color-stark-20)" strokeWidth="14" />
             {segs.map((s) => (
               <circle key={s.c} cx="56" cy="56" r="42" fill="none" transform="rotate(-90 56 56)" stroke={s.c} strokeWidth="14" strokeDasharray={s.dash} strokeDashoffset={s.off} />
             ))}
           </svg>
           <div aria-hidden="true" className="absolute inset-0 flex flex-col items-center justify-center leading-[1.15]">
-            <span className="text-[10px] text-stark-120">Passé</span>
-            <b className={`text-lg font-bold tabular-nums ${over ? "text-allen-120" : ""}`}>{hL(total)}</b>
+            <span className="text-[10px] text-stark-120">Engagé</span>
+            <b className={`text-lg font-bold tabular-nums ${engage > alloue ? "text-allen-120" : ""}`}>{hL(engage)}</b>
             <span className="text-[10px] text-stark-120">sur {hL(alloue)}</span>
           </div>
         </div>
         <div className="flex min-w-0 flex-[1_1_200px] flex-col gap-[3px] text-xs">
-          {TCATS.map((c) => (
+          {TCATS.filter((c) => cat[c.k] > 0).map((c) => (
             <div key={c.k} className="flex items-center gap-2">
               <i aria-hidden="true" className="h-[9px] w-[9px] flex-none rounded-sm" style={{ background: c.c }} />
               <span className="min-w-0 flex-1">{c.l}</span>
               <b className="font-semibold tabular-nums">{hL(cat[c.k])}</b>
             </div>
           ))}
-          <div className="flex items-center gap-2">
-            <i aria-hidden="true" className="h-[9px] w-[9px] flex-none rounded-sm" style={{ background: EST.prevu.dot }} />
-            <span className="min-w-0 flex-1">Prévu</span>
-            <b className="font-semibold tabular-nums">{hL(prevu)}</b>
-          </div>
-          <div className="flex items-center gap-2">
-            <i aria-hidden="true" className="h-[9px] w-[9px] flex-none rounded-sm border border-stark-40 bg-stark-20" />
-            <span className="min-w-0 flex-1">Disponible</span>
-            <b className="font-semibold tabular-nums">{hL(dispo)}</b>
-          </div>
+          {prevu > 0 && (
+            <div className="flex items-center gap-2">
+              <i aria-hidden="true" className="h-[9px] w-[9px] flex-none rounded-sm" style={{ background: EST.prevu.dot }} />
+              <span className="min-w-0 flex-1">Prévu</span>
+              <b className="font-semibold tabular-nums">{hL(prevu)}</b>
+            </div>
+          )}
+          {dispo > 0 && (
+            <div className="flex items-center gap-2">
+              <i aria-hidden="true" className="h-[9px] w-[9px] flex-none rounded-sm border border-stark-40 bg-stark-20" />
+              <span className="min-w-0 flex-1">Disponible</span>
+              <b className="font-semibold tabular-nums">{hL(dispo)}</b>
+            </div>
+          )}
           {over && (
             <div className="flex items-center gap-2 font-semibold text-allen-120">
               <i aria-hidden="true" className="h-[9px] w-[9px] flex-none rounded-sm bg-allen-100" />

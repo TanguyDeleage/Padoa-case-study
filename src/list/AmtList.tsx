@@ -4,7 +4,7 @@ import {
   Paperclip, Phone, PhoneCall, Search, Settings, ShieldCheck, Sparkles, User, UserCog, FileText, FolderKanban,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { AMTS, STATUS_STYLE, type AmtSummary } from "../data/amts";
+import { STATUS_STYLE, type AmtSummary } from "../data/amts";
 
 const NAV_GROUPS: ReactNode[][] = [
   [<LayoutGrid />, <CalendarDays />],
@@ -33,7 +33,7 @@ const FILTERS: { l: string; n: string; bold?: boolean; active?: boolean; sub?: b
 
 const GRID = "grid grid-cols-[minmax(0,1.45fr)_minmax(0,1.5fr)_90px_minmax(0,1fr)_150px] gap-x-4";
 
-export function AmtList({ onOpen }: { onOpen: (amt: AmtSummary) => void }) {
+export function AmtList({ amts, onOpen }: { amts: AmtSummary[]; onOpen: (amt: AmtSummary) => void }) {
   return (
     <div className="flex min-h-screen">
       <SideNav />
@@ -55,7 +55,7 @@ export function AmtList({ onOpen }: { onOpen: (amt: AmtSummary) => void }) {
               </span>
             </div>
             <ul className="m-0 flex list-none flex-col gap-3 p-0">
-              {AMTS.map((a) => <AmtCard key={a.id} amt={a} onOpen={() => onOpen(a)} />)}
+              {amts.map((a) => <AmtCard key={a.id} amt={a} onOpen={() => onOpen(a)} />)}
             </ul>
           </main>
         </div>
@@ -68,7 +68,7 @@ export function AmtList({ onOpen }: { onOpen: (amt: AmtSummary) => void }) {
 function SideNav() {
   return (
     <nav aria-label="Navigation principale" className="sticky top-0 flex h-screen w-[74px] flex-none flex-col items-center gap-3 bg-nav py-3 text-white">
-      <span className="mb-1 inline-flex h-11 w-11 items-center justify-center rounded-full bg-raven-100 text-base font-semibold">LD</span>
+      <span className="mb-1 inline-flex h-11 w-11 items-center justify-center rounded-full bg-raven-100 text-base font-semibold">PJ</span>
       {NAV_GROUPS.map((group, i) => (
         <div key={i} className="flex flex-col items-center gap-2 border-t border-white/15 pt-3 first:border-0 first:pt-0">
           {group.map((icon, j) =>
@@ -157,7 +157,7 @@ function AmtCard({ amt, onOpen }: { amt: AmtSummary; onOpen: () => void }) {
             {amt.intervenants.map((n, i) => (
               <div key={n} className="flex items-center gap-2">
                 <span className="truncate">{n}</span>
-                {i === 1 && amt.extraIntervenants && <span className="rounded bg-raven-05 px-1.5 text-[15px] font-semibold text-raven-100">+{amt.extraIntervenants}</span>}
+                {i === 1 && !!amt.extraIntervenants && <span className="rounded bg-raven-05 px-1.5 text-[15px] font-semibold text-raven-100">+{amt.extraIntervenants}</span>}
               </div>
             ))}
           </div>
