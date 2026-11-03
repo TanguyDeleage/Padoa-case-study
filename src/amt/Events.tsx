@@ -342,7 +342,7 @@ function Report({ a, e }: { a: Amt; e: AmtEvent }) {
       </div>
       {mode === "text" ? (
         <textarea id={id} value={e.report} placeholder="Participants, constats, préconisations, suites à donner…"
-          className={`field block min-h-[150px] w-full resize-y px-3 py-2.5 leading-[1.55] placeholder:text-[#7d87a8] ${bd}`}
+          className={`field block min-h-[150px] w-full resize-y px-3 py-2.5 leading-[1.55] ${bd}`}
           onChange={(ev) => a.updE(e.id, { report: ev.target.value })}
           onFocus={() => setPrevText(e.report)}
           onBlur={() => {

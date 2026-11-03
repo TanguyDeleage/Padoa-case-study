@@ -1,4 +1,4 @@
-import { Bell, ChevronDown, Clock, Flag, ListChecks, Trash2 } from "lucide-react";
+import { Bell, ChevronDown, Clock, Flag, ListChecks, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { AmtStatus } from "../data/amts";
 import { AMT_STATUSES, EST, STATUS_DOT, TCATS, TODAY, days, fmt, hL, isDone, durOf, curTotal, planTotal, issues } from "./model";
@@ -72,7 +72,7 @@ function Tasks({ a }: { a: Amt }) {
           <ListChecks size={18} className="text-stark-120" />Liste des tâches
           <span className="rounded bg-stark-05 px-1.5 text-[11px] font-semibold text-stark-120">{done} / {a.tasks.length} faites</span>
         </h3>
-        {!adding && <button type="button" className="btn ml-auto" onClick={() => { setAdding(true); setErr(false); }}>Ajouter un élément</button>}
+        {!adding && <button type="button" className="btn ml-auto text-raven-100 hover:text-raven-120" onClick={() => { setAdding(true); setErr(false); }}><Plus size={14} />Ajouter un élément</button>}
       </div>
       <ul tabIndex={0} aria-label="Tâches" className="-m-0.5 m-0 flex min-h-0 flex-auto list-none flex-col gap-1.5 overflow-y-auto p-0.5">
         {a.tasks.map((t, i) => (

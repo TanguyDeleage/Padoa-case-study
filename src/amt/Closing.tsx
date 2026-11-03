@@ -20,7 +20,7 @@ export function Closing({ a }: { a: Amt }) {
     <div className="mt-6 flex flex-none flex-col gap-5">
       <section aria-labelledby="h-concl" className="flex flex-col gap-3">
         <h3 id="h-concl" className="card-title"><SquarePen size={18} className="text-stark-120" />Conclusion</h3>
-        <textarea aria-labelledby="h-concl" className="field block min-h-24 w-full resize-y px-3 py-2.5 leading-[1.55] placeholder:text-[#7d87a8]"
+        <textarea aria-labelledby="h-concl" className="field block min-h-24 w-full resize-y px-3 py-2.5 leading-[1.55]"
           placeholder="Rédigez la conclusion de l’action…" value={I.conclusion}
           onChange={(e) => a.setInfo("conclusion", e.target.value)} onFocus={() => a.focusField("conclusion")} onBlur={() => a.blurField("conclusion", "Conclusion")} />
       </section>

@@ -3,7 +3,7 @@
 import { ChevronDown, CircleAlert, Plus, Sparkles, Star, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { AmtStatus } from "../data/amts";
-import { AMT_STATUSES, PEOPLE, ROLES, STATUS_DOT, TODAY, fmt, hm, mins, type AmtEvent } from "./model";
+import { AMT_STATUSES, PEOPLE, ROLES, STATUS_DOT, fmt, hm, mins, type AmtEvent } from "./model";
 import { perimLine } from "./perimeter";
 import { Modal } from "./ui";
 import { ME, type Amt } from "./useAmt";
@@ -70,13 +70,13 @@ export function NewEventDialog({ a, kind, editing, onClose }: { a: Amt; kind?: N
   const inter = e0 ? e0.kind === "inter" : kind === "inter";
   const [st, setSt] = useState<AmtStatus>(a.statut);
   const [type, setType] = useState(e0 && !inter ? (e0.typeLabel ?? "Rédaction") : "");
-  const [title, setTitle] = useState(e0?.title ?? a.amt.title);
+  const [title, setTitle] = useState(e0?.title ?? "");
   const [desc, setDesc] = useState<string | null>(e0?.description ?? null);
-  const [date, setDate] = useState(e0?.date ?? TODAY);
+  const [date, setDate] = useState(e0?.date ?? "");
   const [start, setStart] = useState(e0?.start ?? "");
   const [end, setEnd] = useState(e0?.end ?? "");
   // Editing a rendez-vous: every participant who has an occurrence of it
-  const [pds, setPds] = useState<string[]>(() => (e0 ? a.events.filter((x) => x.rdv === e0.rdv).map((x) => x.who) : [ME]));
+  const [pds, setPds] = useState<string[]>(() => (e0 ? a.events.filter((x) => x.rdv === e0.rdv).map((x) => x.who) : []));
   const [addr, setAddr] = useState(e0?.address ?? ADDRESSES[a.amt.company] ?? `${a.amt.company}, 18000 Bourges`);
   const [visio, setVisio] = useState(e0?.typeLabel === "Intervention en visio");
   const [contact, setContact] = useState(e0?.contact ?? "");

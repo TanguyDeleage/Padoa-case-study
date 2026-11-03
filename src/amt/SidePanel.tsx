@@ -44,8 +44,8 @@ function Fiche({ a }: { a: Amt }) {
     <button key={k} type="button" role="switch" aria-checked={I[k]} onClick={() => a.setInfoNow(k, !I[k], l, [l, I[k] ? "Oui" : "Non", I[k] ? "Non" : "Oui"])}
       className="-mx-2 flex items-center justify-between gap-3 rounded-md border-0 bg-transparent px-2 py-1.5 text-left hover:bg-[rgba(0,18,53,.06)]">
       <span>{l}</span>
-      <span aria-hidden="true" className="relative inline-block h-[18px] w-8 flex-none rounded-full" style={{ background: I[k] ? "#0046da" : "#c9cfe0" }}>
-        <span className="absolute top-0.5 h-3.5 w-3.5 rounded-full bg-white transition-[left]" style={{ left: I[k] ? 16 : 2 }} />
+      <span aria-hidden="true" className="relative inline-block h-[18px] w-[32px] flex-none rounded-full" style={{ background: I[k] ? "#0046da" : "#c9cfe0" }}>
+        <span className="absolute top-[2px] h-[14px] w-[14px] rounded-full bg-white transition-[left]" style={{ left: I[k] ? 16 : 2 }} />
       </span>
     </button>
   );
@@ -85,11 +85,11 @@ function Fiche({ a }: { a: Amt }) {
             <label htmlFor="b-dem" className={lbl}>Demandeur</label>
             <div className="pl-2"><select id="b-dem" className="ghost cursor-pointer" {...select("demandeur", "Demandeur")}>{["PETIT Julie", "Dr MOREAU Claire", "FERRAND Hugo", "CARON Inès"].map((o) => <option key={o}>{o}</option>)}</select></div>
             <label htmlFor="b-ct" className={lbl}>Contact</label>
-            <div className="pl-2"><input id="b-ct" className="ghost" placeholder="+ Ajouter un contact" {...text("contact", "Contact")} /></div>
+            <div className="pl-2"><input id="b-ct" className="ghost" placeholder="Saisir un contact" {...text("contact", "Contact")} /></div>
             <label htmlFor="b-ctx" className={lbl}>Contexte</label>
-            <div className="pl-2"><textarea id="b-ctx" className="ghost block min-h-[110px] resize-y" placeholder="+ Ajouter un contexte" {...text("contexte", "Contexte")} /></div>
+            <div className="pl-2"><textarea id="b-ctx" className="ghost block min-h-[110px] resize-y" placeholder="Saisir un contexte" {...text("contexte", "Contexte")} /></div>
             <label htmlFor="b-desc" className={lbl}>Description</label>
-            <div className="pl-2"><textarea id="b-desc" className="ghost block min-h-[110px] resize-y" placeholder="+ Ajouter une description" {...text("description", "Description")} /></div>
+            <div className="pl-2"><textarea id="b-desc" className="ghost block min-h-[110px] resize-y" placeholder="Saisir une description" {...text("description", "Description")} /></div>
           </div>
         </div>
 
